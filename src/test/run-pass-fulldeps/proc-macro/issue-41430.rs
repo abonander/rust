@@ -8,15 +8,11 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-// aux-build:issue-41211.rs
-
-// FIXME: https://github.com/rust-lang/rust/issues/41430
-// This is a temporary regression test for the ICE reported in #41211
+// aux-build:issue-41430.rs
 
 #![feature(proc_macro)]
 #![emit_unchanged]
-//~^ ERROR: cannot find attribute macro `emit_unchanged` in this scope
-extern crate issue_41211;
-use issue_41211::emit_unchanged;
+extern crate issue_41430;
+use issue_41430::emit_unchanged;
 
 fn main() {}

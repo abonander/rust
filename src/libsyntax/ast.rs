@@ -2172,6 +2172,8 @@ pub enum ForeignItemKind {
     Static(P<Ty>, bool),
     /// A foreign type
     Ty,
+    /// A macro invocation (not really supported)
+    Macro(Mac),
 }
 
 impl ForeignItemKind {
@@ -2180,6 +2182,7 @@ impl ForeignItemKind {
             ForeignItemKind::Fn(..) => "foreign function",
             ForeignItemKind::Static(..) => "foreign static item",
             ForeignItemKind::Ty => "foreign type",
+            ForeignItemKind::Macro(..) => "macro in foreign module",
         }
     }
 }

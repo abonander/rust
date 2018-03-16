@@ -1126,6 +1126,9 @@ impl<'a> State<'a> {
                 self.end()?; // end the head-ibox
                 self.end() // end the outer cbox
             }
+            ast::ForeignItemKind::Macro(..) => {
+                // FIXME: stub for now
+            }
         }
     }
 

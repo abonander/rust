@@ -6776,7 +6776,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parse a foreign item.
-    fn parse_foreign_item(&mut self) -> PResult<'a, Option<ForeignItem>> {
+    pub fn parse_foreign_item(&mut self) -> PResult<'a, Option<ForeignItem>> {
         let attrs = self.parse_outer_attributes()?;
         let lo = self.span;
         let visibility = self.parse_visibility(false)?;

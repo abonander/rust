@@ -133,6 +133,8 @@ expansions! {
         "trait item", .make_trait_items, lift .fold_trait_item, lift .visit_trait_item;
     ImplItems: SmallVector<ast::ImplItem> [SmallVector, ast::ImplItem],
         "impl item",  .make_impl_items,  lift .fold_impl_item,  lift .visit_impl_item;
+    ForeignItems: SmallVector<ast::ForeignItem> [SmallVector, ast::ForeignItem],
+        "foreign item", .make_foreign_items, lift .fold_foreign_item, lift .visit_foreign_item;
 }
 
 impl ExpansionKind {
@@ -434,6 +436,11 @@ impl<'a, 'b> MacroExpander<'a, 'b> {
             Annotatable::ImplItem(item) => {
                 Annotatable::ImplItem(item.map(|item| cfg.fold_impl_item(item).pop().unwrap()))
             }
+            Annotatable::ForeignItem(item) => {
+                Annotatable::ForeignItem(
+                    item.map(|item| cfg.fold_foreign_item(item).pop().unwrap())
+                )
+            }
         }
     }
 
@@ -500,6 +507,7 @@ impl<'a, 'b> MacroExpander<'a, 'b> {
                     Annotatable::Item(item) => token::NtItem(item),
                     Annotatable::TraitItem(item) => token::NtTraitItem(item.into_inner()),
                     Annotatable::ImplItem(item) => token::NtImplItem(item.into_inner()),
+                    Annotatable::ForeignItem(item) => token::NtForeignItem(item.into_inner()),
                 })).into();
                 let tok_result = mac.expand(self.cx, attr.span, attr.tokens, item_tok);
                 self.parse_expansion(tok_result, kind, &attr.path, attr.span)
@@ -757,6 +765,15 @@ impl<'a> Parser<'a> {
                     items.push(self.parse_impl_item(&mut false)?);
                 }
                 Expansion::ImplItems(items)
+            }
+            ExpansionKind::ForeignItems => {
+                let mut items = SmallVector::new();
+                while self.token != token::Eof {
+                    if let Some(item) = self.parse_foreign_item()? {
+                        items.push(item);
+                    }
+                }
+                Expansion::ForeignItems(items)
             }
             ExpansionKind::Stmts => {
                 let mut stmts = SmallVector::new();
@@ -1087,6 +1104,18 @@ impl<'a, 'b> Folder for InvocationCollector<'a, 'b> {
 
     fn fold_foreign_mod(&mut self, foreign_mod: ast::ForeignMod) -> ast::ForeignMod {
         noop_fold_foreign_mod(self.cfg.configure_foreign_mod(foreign_mod), self)
+    }
+
+    fn fold_foreign_item(&mut self, foreign_item: ast::ForeignItem) -> SmallVector<ast::ForeignItem> {
+        let (attr, traits, foreign_item) = self.classify_item(foreign_item);
+
+        if attr.is_some() || !traits.is_empty()  {
+            let item = Annotatable::ForeignItem(P(foreign_item));
+            return self.collect_attr(attr, traits, item, ExpansionKind::ForeignItems)
+                .make_foreign_items();
+        }
+
+        return noop_fold_foreign_item(foreign_item, self);
     }
 
     fn fold_item_kind(&mut self, item: ast::ItemKind) -> ast::ItemKind {

@@ -10,6 +10,7 @@
 
 // aux-build:nop-attr.rs
 // ignore-stage1
+#![feature(proc_macro)]
 
 extern crate nop_attr;
 
@@ -17,15 +18,17 @@ use nop_attr::{nop_attr, no_output};
 
 fn main() {
     #[nop_attr]
-    println!("Hello, world!");
+    let string = "Hello, world!";
 
-    #[nop_attr]
+    println!("{}", string);
+
+    #[no_output]
     {
-        println!("Hello, world!");
+        unsafe { some_definitely_unknown_symbol_which_should_be_removed() };
     }
 }
 
 extern {
     #[no_output]
-    fn read();
+    fn some_definitely_unknown_symbol_which_should_be_removed();
 }

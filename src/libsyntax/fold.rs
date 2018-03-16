@@ -60,8 +60,12 @@ pub trait Folder : Sized {
         noop_fold_use_tree(use_tree, self)
     }
 
-    fn fold_foreign_item(&mut self, ni: ForeignItem) -> ForeignItem {
+    fn fold_foreign_item(&mut self, ni: ForeignItem) -> SmallVector<ForeignItem> {
         noop_fold_foreign_item(ni, self)
+    }
+
+    fn fold_foreign_item_simple(&mut self, ni: ForeignItem) -> ForeignItem {
+        noop_fold_foreign_item_simple(ni, self)
     }
 
     fn fold_item(&mut self, i: P<Item>) -> SmallVector<P<Item>> {
@@ -413,7 +417,7 @@ pub fn noop_fold_foreign_mod<T: Folder>(ForeignMod {abi, items}: ForeignMod,
                                         fld: &mut T) -> ForeignMod {
     ForeignMod {
         abi,
-        items: items.move_map(|x| fld.fold_foreign_item(x)),
+        items: items.move_flat_map(|x| fld.fold_foreign_item(x)),
     }
 }
 
@@ -1070,7 +1074,12 @@ pub fn noop_fold_item_simple<T: Folder>(Item {id, ident, attrs, node, vis, span,
     }
 }
 
-pub fn noop_fold_foreign_item<T: Folder>(ni: ForeignItem, folder: &mut T) -> ForeignItem {
+pub fn noop_fold_foreign_item<T: Folder>(ni: ForeignItem, folder: &mut T)
+-> SmallVector<ForeignItem> {
+    SmallVector::one(folder.fold_foreign_item_simple(ni))
+}
+
+pub fn noop_fold_foreign_item_simple<T: Folder>(ni: ForeignItem, folder: &mut T) -> ForeignItem {
     ForeignItem {
         id: folder.new_id(ni.id),
         vis: folder.fold_vis(ni.vis),
@@ -1084,6 +1093,7 @@ pub fn noop_fold_foreign_item<T: Folder>(ni: ForeignItem, folder: &mut T) -> For
                 ForeignItemKind::Static(folder.fold_ty(t), m)
             }
             ForeignItemKind::Ty => ForeignItemKind::Ty,
+            ForeignItemKind::Macro(mac) => ForeignItemKind::Macro(folder.fold_mac(mac)),
         },
         span: folder.new_span(ni.span)
     }

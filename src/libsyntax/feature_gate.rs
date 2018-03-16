@@ -1556,6 +1556,9 @@ impl<'a> Visitor<'a> for PostExpansionVisitor<'a> {
                     gate_feature_post!(&self, extern_types, i.span,
                                        "extern types are experimental");
             }
+            ast::ForeignItemKind::Macro(..) => {
+                // FIXME: do we allow macro invocs in `extern {}`?
+            }
         }
 
         visit::walk_foreign_item(self, i)

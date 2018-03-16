@@ -60,6 +60,10 @@ pub fn placeholder(kind: ExpansionKind, id: ast::NodeId) -> Expansion {
             defaultness: ast::Defaultness::Final,
             tokens: None,
         })),
+        ExpansionKind::ForeignItems => Expansion::ForeignItems(SmallVector::one(ast::ForeignItem {
+            id, span, ident, vis, attrs,
+            node: ast::ForeignItemKind::Macro(mac_placeholder()),
+        })),
         ExpansionKind::Pat => Expansion::Pat(P(ast::Pat {
             id, span, node: ast::PatKind::Mac(mac_placeholder()),
         })),
